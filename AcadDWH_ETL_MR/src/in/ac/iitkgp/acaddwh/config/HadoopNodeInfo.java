@@ -8,7 +8,7 @@ public class HadoopNodeInfo {
 	private static int hadoopNodePort = 22;
 
 	private static String username = "15CS60R16";
-	private static String password = "P0w3r2d0m#";
+	private static String password = "";
 
 	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH_Data/";
 
