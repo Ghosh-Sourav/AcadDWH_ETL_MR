@@ -26,7 +26,7 @@ import in.ac.iitkgp.acaddwh.util.KeyRepository;
  * Servlet implementation class ETLController
  */
 @WebServlet(asyncSupported = true, urlPatterns = { "/ETLController" })
-@MultipartConfig(location = "/home/mt1/15CS60R16/AcadDWH/tempUpload", fileSizeThreshold = 2000000000, maxFileSize = -1, maxRequestSize = -1) /*
+@MultipartConfig(location = "/home/mtech/15CS60R16/AcadDWH/tempUpload", fileSizeThreshold = 2000000000, maxFileSize = -1, maxRequestSize = -1) /*
 																																								 * Sizes
 																																								 * in
 																																								 * B
