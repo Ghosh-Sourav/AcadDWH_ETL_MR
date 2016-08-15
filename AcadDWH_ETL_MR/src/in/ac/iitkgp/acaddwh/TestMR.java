@@ -43,7 +43,7 @@ public class TestMR {
 		}
 	}
 */
-	public static void main(String[] args) throws Exception {
+	public static int executeJob() throws Exception {
 		Configuration conf = new Configuration();
 		Job job = new Job(conf, "testMR");
 		job.setJarByClass(TestMR.class);
@@ -54,6 +54,6 @@ public class TestMR {
 		job.setInputFormatClass(KeyValueTextInputFormat.class);
 		FileInputFormat.addInputPath(job, new Path(HadoopNodeInfo.getPathInHdfs() + "20160815213022114_INSA_dim_departments.csv"));
 		FileOutputFormat.setOutputPath(job, new Path(HadoopNodeInfo.getPathInHdfs() + "output_20160815213022114_INSA_dim_departments.csv"));
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		return (job.waitForCompletion(true) ? 0 : 1);
 	}
 }
