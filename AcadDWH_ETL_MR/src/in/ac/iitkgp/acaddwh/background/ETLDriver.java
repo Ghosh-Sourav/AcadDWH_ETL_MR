@@ -21,7 +21,7 @@ import in.ac.iitkgp.acaddwh.service.RequestService;
 import in.ac.iitkgp.acaddwh.service.etl.dim.*;
 import in.ac.iitkgp.acaddwh.service.etl.fact.*;
 import in.ac.iitkgp.acaddwh.service.impl.RequestServiceImpl;
-import in.ac.iitkgp.acaddwh.util.SCP;
+import in.ac.iitkgp.acaddwh.util.HdfsFileTransfer;
 
 public class ETLDriver implements Runnable {
 
@@ -134,76 +134,73 @@ public class ETLDriver implements Runnable {
 		ETLService<?> etlService = (ETLService<?>) etlClass.newInstance();
 
 		try {
-			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-					/ 1000000;
-
-			List<?> items = etlService.extract(absoluteFileNameWithoutExtn + ".csv", ",",
-					absoluteFileNameWithoutExtn + "-report.txt");
-			timePostExtract = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-					/ 1000000;
-			System.out.println("Extracted " + items.size() + " items");
-			request.setStatus("Extraction completed, Transforming..." + "<br/> E: " + (timePostExtract - timeInitial));
+			
+			HdfsFileTransfer.copyFileToHdfs(absoluteFileNameWithoutExtn + ".csv");
+		
+			
+			request.setStatus("Done");
+			
 			requestService.updateLog(request);
-
-			resultCount = etlService.transform(items, request.getInstituteKey(),
-					absoluteFileNameWithoutExtn + "-report.txt");
-			timePostTransform = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-					/ 1000000;
-			System.out.println("Transformed " + resultCount + " items");
-			request.setStatus("Transformation completed, Loading..." + "<br/> E: " + (timePostExtract - timeInitial)
-					+ "<br/> T: " + (timePostTransform - timePostExtract));
-			requestService.updateLog(request);
-
-			if (ProjectInfo.isConstraintViolationReqd()) {
-				System.out.println("Constraint validation required; Loading into DB before warehousing...");
-				resultCount = etlService.load(items, absoluteFileNameWithoutExtn + "-report.txt");
-				System.out.println("Loaded " + resultCount + " items");
-				request.setStatus("Loading completed with constraint checking, Warehousing..." + "<br/> E: "
-						+ (timePostExtract - timeInitial) + "<br/> T: " + (timePostTransform - timePostExtract));
-				requestService.updateLog(request);
-			} else {
-				System.out.println("Constraint validation not required; Skipping loading into DB phase...");
-				request.setStatus("Transformation completed, Warehousing..." + "<br/> E: "
-						+ (timePostExtract - timeInitial) + "<br/> T: " + (timePostTransform - timePostExtract));
-				requestService.updateLog(request);
-			}
-
-			/*
-			 * Save warehoused output to "-hive.csv" file, and send to hadoop
-			 * node
-			 */
-			ItemDSO.writeTransformedCSV(items, absoluteFileNameWithoutExtn + "-hive.csv");
-			String hadoopLocalFileName = SCP.sendToHadoopNode(absoluteFileNameWithoutExtn + "-hive.csv");
-
-			etlService.warehouse(hadoopLocalFileName, absoluteFileNameWithoutExtn + "-report.txt");
-			timePostWarehouse = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-					/ 1000000;
-			System.out.println("Warehoused " + hadoopLocalFileName);
-			request.setStatus("ETL Process completed successfully" + "<br/> E: " + (timePostExtract - timeInitial)
-					+ "<br/> T: " + (timePostTransform - timePostExtract) + "<br/> L/W: "
-					+ (timePostWarehouse - timePostTransform) + "<br/> ETL/W: " + (timePostWarehouse - timeInitial));
-			requestService.updateLog(request);
-
-		} catch (ExtractException e) {
-			System.out.println("Extraction failed!");
-			request.setStatus("Extraction failed, ETL Aborted");
-			requestService.updateLog(request);
-
-		} catch (TransformException e) {
-			System.out.println("Transformation failed!");
-			request.setStatus("Transformation failed, ETL Aborted");
-			requestService.updateLog(request);
-
-		} catch (LoadException e) {
-			System.out.println("Loading failed!");
-			request.setStatus("Loading failed, ETL Aborted");
-			requestService.updateLog(request);
-
-		} catch (WarehouseException e) {
-			System.out.println("Warehousing failed!");
-			request.setStatus("Warehousing failed, ETL completed upto Loading phase");
-			requestService.updateLog(request);
-
+			
+			
+//			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
+//					/ 1000000;
+//
+//			List<?> items = etlService.extract(absoluteFileNameWithoutExtn + ".csv", ",",
+//					absoluteFileNameWithoutExtn + "-report.txt");
+//			timePostExtract = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
+//					/ 1000000;
+//			System.out.println("Extracted " + items.size() + " items");
+//			request.setStatus("Extraction completed, Transforming..." + "<br/> E: " + (timePostExtract - timeInitial));
+//			requestService.updateLog(request);
+//
+//			resultCount = etlService.transform(items, request.getInstituteKey(),
+//					absoluteFileNameWithoutExtn + "-report.txt");
+//			timePostTransform = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
+//					/ 1000000;
+//			System.out.println("Transformed " + resultCount + " items");
+//			request.setStatus("Transformation completed, Loading..." + "<br/> E: " + (timePostExtract - timeInitial)
+//					+ "<br/> T: " + (timePostTransform - timePostExtract));
+//			requestService.updateLog(request);
+//
+//
+//			/*
+//			 * Save warehoused output to "-hive.csv" file, and send to hadoop
+//			 * node
+//			 */
+//			ItemDSO.writeTransformedCSV(items, absoluteFileNameWithoutExtn + "-hive.csv");
+//			String hadoopLocalFileName = SCP.sendToHadoopNode(absoluteFileNameWithoutExtn + "-hive.csv");
+//			
+//
+//			etlService.warehouse(hadoopLocalFileName, absoluteFileNameWithoutExtn + "-report.txt");
+//			timePostWarehouse = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
+//					/ 1000000;
+//			System.out.println("Warehoused " + hadoopLocalFileName);
+//			request.setStatus("ETL Process completed successfully" + "<br/> E: " + (timePostExtract - timeInitial)
+//					+ "<br/> T: " + (timePostTransform - timePostExtract) + "<br/> L/W: "
+//					+ (timePostWarehouse - timePostTransform) + "<br/> ETL/W: " + (timePostWarehouse - timeInitial));
+//			requestService.updateLog(request);
+//
+//		} catch (ExtractException e) {
+//			System.out.println("Extraction failed!");
+//			request.setStatus("Extraction failed, ETL Aborted");
+//			requestService.updateLog(request);
+//
+//		} catch (TransformException e) {
+//			System.out.println("Transformation failed!");
+//			request.setStatus("Transformation failed, ETL Aborted");
+//			requestService.updateLog(request);
+//
+//		} catch (LoadException e) {
+//			System.out.println("Loading failed!");
+//			request.setStatus("Loading failed, ETL Aborted");
+//			requestService.updateLog(request);
+//
+//		} catch (WarehouseException e) {
+//			System.out.println("Warehousing failed!");
+//			request.setStatus("Warehousing failed, ETL completed upto Loading phase");
+//			requestService.updateLog(request);
+//
 		} catch (Exception e) {
 			System.out.println("Exeption occurred!");
 			request.setStatus(request.getStatus() + " Aborted!");

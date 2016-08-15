@@ -6,7 +6,7 @@ public class ProjectInfo {
 
 	private static String uploadDirPathWindows = "G:/AcadDWH/AcadDWH_Data/";
 	private static String uploadDirPathLinux = 
-	"/home/mtech/15CS60R16/AcadDWH/AcadDWH_Data/";		// For cse-hadoop-101 Server
+	HadoopNodeInfo.getPathInHadoopLocal();				// For cse-hadoop-101 Server
 	// "/home/mt1/15CS60R16/AcadDWH/AcadDWH_Data/";		// For xeon Server
 	
 	private static boolean constraintViolationReqd = false;
@@ -29,8 +29,6 @@ public class ProjectInfo {
 
 	public static boolean isConstraintViolationReqd() {
 		return constraintViolationReqd;
-	}
-
-	
+	}	
 
 }

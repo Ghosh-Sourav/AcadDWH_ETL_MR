@@ -10,7 +10,8 @@ public class HadoopNodeInfo {
 	private static String username = "15CS60R16";
 	private static String password = "";
 
-	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH_Data/";
+	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH/AcadDWH_Data/";
+	private static String pathInHdfs = "/user/15CS60R16/AcadDWH/AcadDWH_Data/";
 
 	public static String getHadoopNodeIP() {
 		return hadoopNodeIP;
@@ -30,6 +31,10 @@ public class HadoopNodeInfo {
 
 	public static String getPathInHadoopLocal() {
 		return pathInHadoopLocal;
+	}
+
+	public static String getPathInHdfs() {
+		return pathInHdfs;
 	}
 
 }
