@@ -12,7 +12,7 @@ Calling TestClass...
 <%
 //out.println(TestMR.executeJob());
 
-for (String filePath: TestHDFSList.getFiles()) {
+for (String filePath: TestHDFSList.getFilePaths()) {
 	out.println(filePath);
 }
 
