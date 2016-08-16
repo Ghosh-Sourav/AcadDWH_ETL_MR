@@ -22,7 +22,7 @@ public class TestHDFSList {
 					+ "outputDir_20160815213022114_INSA_dim_departments_csv"));
 
 			for (FileStatus eachFileStatus : fileStatus) {
-				if (eachFileStatus.isFile() && eachFileStatus.getPath().getName().contains("part-r-")) {
+				if (eachFileStatus.isFile() && eachFileStatus.getPath().getName().contains("part-")) {
 					filePaths.add(eachFileStatus.getPath().toString());
 		        }
 			}

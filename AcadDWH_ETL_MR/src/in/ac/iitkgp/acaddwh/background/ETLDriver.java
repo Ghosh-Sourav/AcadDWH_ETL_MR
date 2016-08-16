@@ -130,6 +130,7 @@ public class ETLDriver implements Runnable {
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
 		int resultCount = 0;
 		long timeInitial, timePostExtract, timePostTransform, timePostWarehouse;
+		String shortFileName;
 
 		ETLService<?> etlService = (ETLService<?>) etlClass.newInstance();
 
@@ -137,9 +138,17 @@ public class ETLDriver implements Runnable {
 			
 			HdfsFileTransfer.copyFileToHdfs(absoluteFileNameWithoutExtn + ".csv");
 		
+			shortFileName = new File(absoluteFileNameWithoutExtn + ".csv").getName();
 			
-			request.setStatus("Done");
+			request.setStatus("Processing file..."+shortFileName);			
+			requestService.updateLog(request);
 			
+			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
+					/ 1000000;
+			
+			DepartmentETL.extractAndTransform(shortFileName, request.getInstituteKey(), absoluteFileNameWithoutExtn + "-report.txt");
+			
+			request.setStatus("Processed file..."+shortFileName);			
 			requestService.updateLog(request);
 			
 			

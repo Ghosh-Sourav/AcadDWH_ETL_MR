@@ -17,7 +17,7 @@ import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 
 public class TestMR {
 	public static class ETMapper extends Mapper<Text, Text, Text, Text> {
-		private Text attribute = new Text();
+		private Text attributes = new Text();
 
 		public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
 			StringTokenizer itr = new StringTokenizer(value.toString(), ",");
@@ -29,8 +29,8 @@ public class TestMR {
 			}
 			sb.setLength(sb.length()-1);
 			
-			attribute.set(sb.toString());
-			context.write(key, attribute);
+			attributes.set(sb.toString());
+			context.write(key, attributes);
 		}
 	}
 

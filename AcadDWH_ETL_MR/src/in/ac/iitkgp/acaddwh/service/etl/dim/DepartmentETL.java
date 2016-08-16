@@ -7,8 +7,23 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+import in.ac.iitkgp.acaddwh.TestMR;
+import in.ac.iitkgp.acaddwh.TestMR.ETMapper;
 import in.ac.iitkgp.acaddwh.bean.dim.Department;
+import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
+import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 import in.ac.iitkgp.acaddwh.dao.dim.DepartmentDAO;
 import in.ac.iitkgp.acaddwh.exception.ExtractException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
@@ -20,6 +35,53 @@ import in.ac.iitkgp.acaddwh.util.HiveConnection;
 import in.ac.iitkgp.acaddwh.util.LogFile;
 
 public class DepartmentETL implements ETLService<Department> {
+
+	public static class ETMapper extends Mapper<Text, Text, Text, Text> {
+		private Text attributes = new Text();
+
+		public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
+			Configuration conf = context.getConfiguration();
+			String instituteCode = conf.get("instituteCode");
+			
+			StringTokenizer itr = new StringTokenizer(value.toString(), ",");
+			Department department = new Department();
+
+			department.setDeptCode(key.toString());
+			department.setDeptName(itr.nextToken());
+			department.setDeptDcsType(itr.nextToken());
+			
+			department.setDeptKey(instituteCode + '_' + department.getDeptCode());
+			
+			attributes.set(department.getPrintableLineWithoutKeyAndNewLine());
+			context.write(new Text(department.getDeptKey()), attributes);
+		}
+	}
+
+	public static int extractAndTransform(String shortFileName, String instituteCode, String absoluteLogFileName) throws ExtractException {
+		try {
+			Configuration conf = new Configuration();
+			conf.set("key.value.separator.in.input.line", ",");
+			conf.set("mapred.textoutputformat.separator", ",");
+			conf.set("instituteCode", instituteCode);
+			
+			Job job = new Job(conf, "extractTransform_"+shortFileName);
+			//job.setJarByClass(TestMR.class);
+			job.setMapperClass(ETMapper.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			job.setInputFormatClass(KeyValueTextInputFormat.class);
+			
+			FileInputFormat.addInputPath(job, new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
+					+ shortFileName));
+			FileOutputFormat.setOutputPath(job, new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
+					+ "outputDir_"+shortFileName.replace(".", "_")));
+			return (job.waitForCompletion(true) ? 0 : 1);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw (new ExtractException());
+		}
+	}
 
 	public List<?> extract(String filePath, String splitter, String absoluteLogFileName) throws ExtractException {
 		List<Department> departments = new ArrayList<Department>();

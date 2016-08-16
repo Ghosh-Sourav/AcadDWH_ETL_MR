@@ -47,5 +47,11 @@ public class Department extends Item {
 		line = deptKey + "," + deptCode + "," + deptName + "," + deptDcsType + "\n";
 		return line;
 	}
+	
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = deptCode + "," + deptName + "," + deptDcsType;
+		return line;
+	}
 
 }
