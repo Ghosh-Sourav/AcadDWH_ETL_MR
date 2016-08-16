@@ -1,5 +1,6 @@
 package in.ac.iitkgp.acaddwh;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,7 +16,8 @@ public class TestHDFSList {
 	public static List<String> getFilePaths() throws Exception {
 		List<String> filePaths = new ArrayList<String>();
 		try {
-			FileSystem fs = FileSystem.get(new Configuration());
+			Configuration configuration = new Configuration();
+			FileSystem fs = FileSystem.get(new URI(NameNodeInfo.getUrl()),configuration);
 			FileStatus[] fileStatus = fs.listStatus(new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
 					+ "outputDir_20160815213022114_INSA_dim_departments_csv"));
 
