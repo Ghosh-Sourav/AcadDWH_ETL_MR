@@ -112,4 +112,12 @@ public class StuLearning extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = courseKey + "," + timeKey + "," + studentKey + "," + regtypeKey + "," + grade + ","
+				+ numGrade + "," + imprFactor + "," + prFnImpr + "," + prPsImpr + "," + percentAttended;
+		return line;
+	}
+
 }

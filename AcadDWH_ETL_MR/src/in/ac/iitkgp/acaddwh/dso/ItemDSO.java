@@ -3,13 +3,13 @@ package in.ac.iitkgp.acaddwh.dso;
 import java.util.List;
 
 import in.ac.iitkgp.acaddwh.bean.Item;
-import in.ac.iitkgp.acaddwh.exception.WarehouseException;
+import in.ac.iitkgp.acaddwh.exception.LoadException;
 import in.ac.iitkgp.acaddwh.util.DataWriter;
 
 public class ItemDSO {
 	
 	@SuppressWarnings("unchecked")
-	public static void writeTransformedCSV(List<?> items, String filePath) throws WarehouseException {
+	public static void writeTransformedCSV(List<?> items, String filePath) throws LoadException {
 
 		StringBuffer content = new StringBuffer();
 		DataWriter.writeToFile(filePath, "");
@@ -28,7 +28,7 @@ public class ItemDSO {
 			content.delete(0, content.length());
 
 		} catch (Exception e) {
-			throw (new WarehouseException());
+			throw (new LoadException());
 		}
 		
 		System.out.println("Transformed items saved as: "+filePath);

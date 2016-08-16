@@ -1,147 +1,104 @@
 package in.ac.iitkgp.acaddwh.service.etl.fact;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.StringTokenizer;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import in.ac.iitkgp.acaddwh.bean.fact.SplPerformance;
+import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
+import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 import in.ac.iitkgp.acaddwh.dao.fact.SplPerformanceDAO;
-import in.ac.iitkgp.acaddwh.exception.ExtractException;
+import in.ac.iitkgp.acaddwh.exception.ExtractAndTransformException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
-import in.ac.iitkgp.acaddwh.exception.TransformException;
-import in.ac.iitkgp.acaddwh.exception.WarehouseException;
 import in.ac.iitkgp.acaddwh.service.ETLService;
-import in.ac.iitkgp.acaddwh.util.DBConnection;
 import in.ac.iitkgp.acaddwh.util.HiveConnection;
 import in.ac.iitkgp.acaddwh.util.LogFile;
 
 public class SplPerformanceETL implements ETLService<SplPerformance> {
 
-	public List<?> extract(String filePath, String splitter, String absoluteLogFileName) throws ExtractException {
-		List<SplPerformance> splPerformances = new ArrayList<SplPerformance>();
-		StringBuffer logString = new StringBuffer();
-		BufferedReader br = null;
-		String line = null;
+	public static class ETMapper extends Mapper<Text, Text, Text, Text> {
+		private Text attributes = new Text();
 
+		public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
+			Configuration conf = context.getConfiguration();
+			String instituteCode = conf.get("instituteCode");
+
+			StringTokenizer itr = new StringTokenizer(value.toString(), ",");
+			SplPerformance splPerformance = new SplPerformance();
+
+			/* Extract: BEGIN */
+			splPerformance.setSplKey(key.toString());
+			splPerformance.setTimeKey(itr.nextToken());
+			splPerformance.setAdmStuCnt(Integer.parseInt(itr.nextToken()));
+			splPerformance.setOnrollStuCnt(Integer.parseInt(itr.nextToken()));
+			splPerformance.setGradStuCnt(Integer.parseInt(itr.nextToken()));
+			splPerformance.setDropoutStuCnt(Integer.parseInt(itr.nextToken()));
+			splPerformance.setPercentPlaced(Integer.parseInt(itr.nextToken()));
+			splPerformance.setAvgSalary(Float.parseFloat(itr.nextToken()));
+			/* Extract: END */
+
+			/* Transform: BEGIN */
+			splPerformance.setInstituteKey(instituteCode);
+			splPerformance.setSplKey(instituteCode + '_' + splPerformance.getSplKey());
+			splPerformance.setTimeKey(instituteCode + '_' + splPerformance.getTimeKey());
+			/* Transform: END */
+
+			attributes.set(splPerformance.getPrintableLineWithoutKeyAndNewLine());
+			context.write(new Text(splPerformance.getInstituteKey()), attributes);
+		}
+	}
+
+	public boolean extractAndTransform(String shortFileName, String instituteCode, String absoluteLogFileName)
+			throws ExtractAndTransformException {
 		try {
-			br = new BufferedReader(new FileReader(filePath));
-			while ((line = br.readLine()) != null) {
-				SplPerformance splPerformance = new SplPerformance();
-				String[] values = line.split(splitter);
+			Configuration conf = new Configuration();
+			conf.set("key.value.separator.in.input.line", ",");
+			conf.set("mapred.textoutputformat.separator", ",");
+			conf.set("instituteCode", instituteCode);
 
-				splPerformance.setSplKey(values[0]);
-				splPerformance.setTimeKey(values[1]);
-				splPerformance.setAdmStuCnt(Integer.parseInt(values[2]));
-				splPerformance.setOnrollStuCnt(Integer.parseInt(values[3]));
-				splPerformance.setGradStuCnt(Integer.parseInt(values[4]));
-				splPerformance.setDropoutStuCnt(Integer.parseInt(values[5]));
-				splPerformance.setPercentPlaced(Integer.parseInt(values[6]));
-				splPerformance.setAvgSalary(Float.parseFloat(values[7]));
+			Job job = new Job(conf, "extractAndTransform_" + shortFileName);
+			job.setMapperClass(ETMapper.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			job.setInputFormatClass(KeyValueTextInputFormat.class);
 
-				System.out.println("Extracted SplPerformance " + splPerformance);
+			FileInputFormat.addInputPath(job,
+					new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs() + shortFileName));
+			FileOutputFormat.setOutputPath(job, new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
+					+ "outputDir_" + shortFileName.replace(".", "_")));
+			return job.waitForCompletion(true);
 
-				splPerformances.add(splPerformance);
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			logString.append("Extract," + splPerformances.size()
-					+ ",Not Extracted,Data format is invalid - Further lines ignored\n");
-			LogFile.writeToLogFile(absoluteLogFileName, logString);
-			throw (new ExtractException());
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			throw (new ExtractAndTransformException());
 		}
-
-		return splPerformances;
 	}
 
-	@SuppressWarnings("unchecked")
-	public int transform(List<?> splPerformances, String instituteCode, String absoluteLogFileName)
-			throws TransformException {
-		int count = 0;
-		try {
-			for (SplPerformance splPerformance : (List<SplPerformance>) splPerformances) {
-				splPerformance.setInstituteKey(instituteCode);
-				splPerformance.setSplKey(instituteCode + '_' + splPerformance.getSplKey());
-				splPerformance.setTimeKey(instituteCode + '_' + splPerformance.getTimeKey());
-				System.out.println("Transformed SplPerformance " + splPerformance);
-				count++;
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw (new TransformException());
-		}
-		return count;
-	}
-
-	@SuppressWarnings("unchecked")
-	public int load(List<?> splPerformances, String absoluteLogFileName) throws LoadException {
-		int count = 0, processedLineCount = 0;
-		StringBuffer logString = new StringBuffer();
-		Connection con = DBConnection.getWriteConnection();
-		SplPerformanceDAO splPerformanceDAO = new SplPerformanceDAO();
-
-		try {
-			for (SplPerformance splPerformance : (List<SplPerformance>) splPerformances) {
-				try {
-					++processedLineCount;
-					count += splPerformanceDAO.addToDB(con, splPerformance);
-					System.out.println("[UC] Loaded SplPerformance " + splPerformance);
-				} catch (SQLException e) {
-					logString.append("Load," + processedLineCount + ","
-							+ splPerformance.getSplKey().replace(splPerformance.getInstituteKey() + "_", "") + ";"
-							+ splPerformance.getTimeKey().replace(splPerformance.getInstituteKey() + "_", "") + ","
-							+ LogFile.getErrorMsg(e) + "\n");
-					con.rollback();
-				}
-			}
-			if (logString.length() != 0) {
-				throw (new LoadException());
-			}
-			System.out.println("Committing updates...");
-			con.commit();
-		} catch (Exception e) {
-			try {
-				System.out.println("Rolling back changes...");
-				con.rollback();
-				LogFile.writeToLogFile(absoluteLogFileName, logString);
-				count = 0;
-				throw (new LoadException());
-			} catch (SQLException e1) {
-				e1.printStackTrace();
-			}
-		} finally {
-			DBConnection.closeConnection(con);
-		}
-
-		return count;
-	}
-
-	public void warehouse(String hadoopLocalFileName, String absoluteLogFileName) throws WarehouseException {
+	public void load(String hdfsFilePath, String absoluteLogFileName) throws LoadException {
 		StringBuffer logString = new StringBuffer();
 
 		Connection con = HiveConnection.getSaveConnection();
 		SplPerformanceDAO splPerformanceDAO = new SplPerformanceDAO();
 
 		try {
-			splPerformanceDAO.addToHive(con, hadoopLocalFileName);
-			System.out.println("[W] Warehoused SplPerformance file: " + hadoopLocalFileName);
+			splPerformanceDAO.addToHive(con, hdfsFilePath);
+			System.out.println("[H] Loaded SplPerformance file: " + hdfsFilePath);
 
 		} catch (SQLException e) {
-			System.out.println("WarehouseException thrown!");
-			logString.append("Warehouse," + "-" + "," + "-" + "," + LogFile.getErrorMsg(e) + "\n");
+			System.out.println("LoadException thrown!");
+			logString.append("Load," + "-" + "," + "-" + "," + LogFile.getErrorMsg(e) + "\n");
 			LogFile.writeToLogFile(absoluteLogFileName, logString);
-			throw (new WarehouseException());
+			throw (new LoadException());
 		} finally {
 			HiveConnection.closeConnection(con);
 		}

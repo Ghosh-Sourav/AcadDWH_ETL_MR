@@ -1,19 +1,27 @@
 package in.ac.iitkgp.acaddwh.service.etl.dim;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import in.ac.iitkgp.acaddwh.bean.dim.Institute;
+import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
+import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 import in.ac.iitkgp.acaddwh.dao.dim.InstituteDAO;
-import in.ac.iitkgp.acaddwh.exception.ExtractException;
+import in.ac.iitkgp.acaddwh.exception.ExtractAndTransformException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
 import in.ac.iitkgp.acaddwh.exception.TransformException;
-import in.ac.iitkgp.acaddwh.exception.WarehouseException;
 import in.ac.iitkgp.acaddwh.service.ETLService;
 import in.ac.iitkgp.acaddwh.util.Cryptography;
 import in.ac.iitkgp.acaddwh.util.DBConnection;
@@ -22,50 +30,79 @@ import in.ac.iitkgp.acaddwh.util.LogFile;
 
 public class InstituteETL implements ETLService<Institute> {
 
-	public List<?> extract(String filePath, String splitter, String absoluteLogFileName) throws ExtractException {
-		List<Institute> institutes = new ArrayList<Institute>();
-		StringBuffer logString = new StringBuffer();
-		BufferedReader br = null;
-		String line = null;
+	public static class ETMapper extends Mapper<Text, Text, Text, Text> {
+		private Text attributes = new Text();
 
-		try {
-			br = new BufferedReader(new FileReader(filePath));
-			while ((line = br.readLine()) != null) {
-				Institute institute = new Institute();
-				String[] values = line.split(splitter);
+		public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
 
-				institute.setInstituteKey(values[0]);
-				institute.setInstituteName(values[1]);
+			StringTokenizer itr = new StringTokenizer(value.toString(), ",");
+			Institute institute = new Institute();
 
-				System.out.println("Extracted Institute " + institute);
+			/* Extract: BEGIN */
+			institute.setInstituteKey(key.toString());
+			institute.setInstituteName(itr.nextToken());
+			/* Extract: END */
 
-				institutes.add(institute);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logString.append(
-					"Extract," + institutes.size() + ",Not Extracted,Data format is invalid - Further lines ignored\n");
-			LogFile.writeToLogFile(absoluteLogFileName, logString);
-			throw (new ExtractException());
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+			/* Transform: BEGIN */
+			institute.setInstitutePassword(
+					Cryptography.encrypt(institute.getInstituteKey() + institute.getInstitutePassword()));
+			/* Transform: END */
+
+			attributes.set(institute.getPrintableLineWithoutKeyAndNewLine());
+			context.write(new Text(institute.getInstituteKey()), attributes);
 		}
-
-		return institutes;
 	}
 
+	public boolean extractAndTransform(String shortFileName, String instituteCode, String absoluteLogFileName)
+			throws ExtractAndTransformException {
+		try {
+			Configuration conf = new Configuration();
+			conf.set("key.value.separator.in.input.line", ",");
+			conf.set("mapred.textoutputformat.separator", ",");
+
+			Job job = new Job(conf, "extractAndTransform_" + shortFileName);
+			job.setMapperClass(ETMapper.class);
+			job.setOutputKeyClass(Text.class);
+			job.setOutputValueClass(Text.class);
+			job.setInputFormatClass(KeyValueTextInputFormat.class);
+
+			FileInputFormat.addInputPath(job,
+					new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs() + shortFileName));
+			FileOutputFormat.setOutputPath(job, new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
+					+ "outputDir_" + shortFileName.replace(".", "_")));
+			return job.waitForCompletion(true);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw (new ExtractAndTransformException());
+		}
+	}
+
+	public void load(String hdfsFilePath, String absoluteLogFileName) throws LoadException {
+		StringBuffer logString = new StringBuffer();
+
+		Connection con = HiveConnection.getSaveConnection();
+		InstituteDAO instituteDAO = new InstituteDAO();
+
+		try {
+			instituteDAO.addToHive(con, hdfsFilePath);
+			System.out.println("[H] Loaded Institute file: " + hdfsFilePath);
+
+		} catch (SQLException e) {
+			System.out.println("LoadException thrown!");
+			logString.append("Load," + "-" + "," + "-" + "," + LogFile.getErrorMsg(e) + "\n");
+			LogFile.writeToLogFile(absoluteLogFileName, logString);
+			throw (new LoadException());
+		} finally {
+			HiveConnection.closeConnection(con);
+		}
+	}
+	
 	@SuppressWarnings("unchecked")
 	public int transform(List<?> institutes, String dummyKey, String absoluteLogFileName) throws TransformException {
 		int count = 0;
 		try {
 			for (Institute institute : (List<Institute>) institutes) {
-				institute.setInstituteKey(institute.getInstituteKey());
 				institute.setInstitutePassword(
 						Cryptography.encrypt(institute.getInstituteKey() + institute.getInstitutePassword()));
 				System.out.println("Transformed Institute " + institute);
@@ -78,8 +115,9 @@ public class InstituteETL implements ETLService<Institute> {
 		return count;
 	}
 
+
 	@SuppressWarnings("unchecked")
-	public int load(List<?> institutes, String absoluteLogFileName) throws LoadException {
+	public int loadToDB(List<?> institutes, String absoluteLogFileName) throws LoadException {
 		int count = 0, processedLineCount = 0;
 		StringBuffer logString = new StringBuffer();
 
@@ -91,9 +129,9 @@ public class InstituteETL implements ETLService<Institute> {
 				try {
 					++processedLineCount;
 					count += instituteDAO.addToDB(con, institute);
-					System.out.println("[UC] Loaded Institute " + institute);
+					System.out.println("[UC] Loaded To DB Institute " + institute);
 				} catch (SQLException e) {
-					logString.append("Load," + processedLineCount + "," + institute.getInstituteKey() + ","
+					logString.append("LoadToDB," + processedLineCount + "," + institute.getInstituteKey() + ","
 							+ LogFile.getErrorMsg(e) + "\n");
 					con.rollback();
 				}
@@ -120,23 +158,4 @@ public class InstituteETL implements ETLService<Institute> {
 		return count;
 	}
 
-	public void warehouse(String hadoopLocalFileName, String absoluteLogFileName) throws WarehouseException {
-		StringBuffer logString = new StringBuffer();
-
-		Connection con = HiveConnection.getSaveConnection();
-		InstituteDAO instituteDAO = new InstituteDAO();
-
-		try {
-			instituteDAO.addToHive(con, hadoopLocalFileName);
-			System.out.println("[W] Warehoused Institute file: " + hadoopLocalFileName);
-
-		} catch (SQLException e) {
-			System.out.println("WarehouseException thrown!");
-			logString.append("Warehouse," + "-" + "," + "-" + "," + LogFile.getErrorMsg(e) + "\n");
-			LogFile.writeToLogFile(absoluteLogFileName, logString);
-			throw (new WarehouseException());
-		} finally {
-			HiveConnection.closeConnection(con);
-		}
-	}
 }

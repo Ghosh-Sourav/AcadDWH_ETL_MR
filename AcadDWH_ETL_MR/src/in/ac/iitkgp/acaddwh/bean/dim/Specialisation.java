@@ -66,4 +66,11 @@ public class Specialisation extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = splCode + "," + splName + "," + deptKey + "," + splDegree + "," + splLevel;
+		return line;
+	}
+
 }

@@ -2,15 +2,19 @@ package in.ac.iitkgp.acaddwh.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
 import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 
-public class HdfsFileTransfer {
+public class HdfsManager {
 
 	/*
 	 * Example:
@@ -49,13 +53,38 @@ public class HdfsFileTransfer {
 	/*
 	 * Generates hdfsFilePath, if not provided
 	 */
-	public static void copyFileToHdfs(String localfsFilePath) throws IOException {
+	public static String copyFileToHdfs(String localfsFilePath) throws IOException {
 
 		File localFile = new File(localfsFilePath);
-
 		String hdfsFilePath = HadoopNodeInfo.getPathInHdfs() + localFile.getName();
 
 		copyFileToHdfs(localfsFilePath, hdfsFilePath);
+		
+		return hdfsFilePath;
 
+	}
+
+	/*
+	 * Example:
+	 * 
+	 * directoryPath = NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs() +
+	 * "outputDir_20160815213022114_INSA_dim_departments_csv";
+	 */
+	public static List<String> getPartFilePaths(String directoryPath) throws Exception {
+		List<String> filePaths = new ArrayList<String>();
+		try {
+			Configuration configuration = new Configuration();
+			FileSystem fs = FileSystem.get(new URI(NameNodeInfo.getUrl()), configuration);
+			FileStatus[] fileStatus = fs.listStatus(new Path(directoryPath));
+
+			for (FileStatus eachFileStatus : fileStatus) {
+				if (eachFileStatus.isFile() && eachFileStatus.getPath().getName().contains("part-")) {
+					filePaths.add(eachFileStatus.getPath().toString());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return filePaths;
 	}
 }

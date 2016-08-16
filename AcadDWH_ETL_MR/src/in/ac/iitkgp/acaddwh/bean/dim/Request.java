@@ -47,4 +47,11 @@ public class Request extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = instituteKey + "," + fileNameWithoutExtn + "," + status;
+		return line;
+	}
+
 }

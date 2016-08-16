@@ -39,4 +39,11 @@ public class Regtype extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = regtypeCode + "," + regtypeDesc;
+		return line;
+	}
+
 }

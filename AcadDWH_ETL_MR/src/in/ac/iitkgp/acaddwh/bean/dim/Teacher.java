@@ -48,4 +48,11 @@ public class Teacher extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = teacherCode + "," + teacherDept + "," + teacherDesg;
+		return line;
+	}
+
 }

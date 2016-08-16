@@ -1,10 +1,14 @@
 package in.ac.iitkgp.acaddwh.service.impl;
 
+import java.io.File;
+import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
 import in.ac.iitkgp.acaddwh.bean.dim.Institute;
+import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
+import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 import in.ac.iitkgp.acaddwh.config.ProjectInfo;
 import in.ac.iitkgp.acaddwh.dao.dim.AccountDAO;
 import in.ac.iitkgp.acaddwh.dso.ItemDSO;
@@ -14,6 +18,7 @@ import in.ac.iitkgp.acaddwh.service.ETLService;
 import in.ac.iitkgp.acaddwh.service.etl.dim.InstituteETL;
 import in.ac.iitkgp.acaddwh.util.Cryptography;
 import in.ac.iitkgp.acaddwh.util.DBConnection;
+import in.ac.iitkgp.acaddwh.util.HdfsManager;
 
 public class AccountServiceImpl implements AccountService {
 
@@ -70,21 +75,25 @@ public class AccountServiceImpl implements AccountService {
 
 		ETLService<Institute> etlService = new InstituteETL();
 		try {
-			// TODO: Modify sign up code here
-			throw (new ETLException());
-//			etlService.transform(institutes, null, null);
-//			etlService.load(institutes, null);
-//			
-//			ItemDSO.writeTransformedCSV(institutes, absoluteFileNameWithoutExtn + "-hive.csv");
-//			String hadoopLocalFileName = SCP.sendToHadoopNode(absoluteFileNameWithoutExtn + "-hive.csv");
-//
-//			etlService.warehouse(hadoopLocalFileName, absoluteFileNameWithoutExtn + "-report.txt");
+			String shortFileName = new File(absoluteFileNameWithoutExtn + ".csv").getName();
+			
+			((InstituteETL) etlService).transform(institutes, null, null);
+			((InstituteETL) etlService).loadToDB(institutes, null);
+			
+			ItemDSO.writeTransformedCSV(institutes, absoluteFileNameWithoutExtn + ".csv");
+			HdfsManager.copyFileToHdfs(absoluteFileNameWithoutExtn + ".csv");
+
+			String hdfsInstituteFilePath = NameNodeInfo.getUrl()
+					+ HadoopNodeInfo.getPathInHdfs() + shortFileName;
+			etlService.load(hdfsInstituteFilePath, absoluteFileNameWithoutExtn + "-report.txt");
 			
 		} catch (ETLException e) {
 			throw (e);
+		} catch(IOException e) {
+			throw (new ETLException());
 		}
 
-		//return institute.getInstituteKey();
+		return institute.getInstituteKey();
 	}
 
 }

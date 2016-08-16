@@ -9,19 +9,18 @@ import java.util.List;
 import javax.servlet.http.Part;
 
 import in.ac.iitkgp.acaddwh.bean.dim.Request;
-import in.ac.iitkgp.acaddwh.config.ProjectInfo;
-import in.ac.iitkgp.acaddwh.dso.ItemDSO;
+import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
+import in.ac.iitkgp.acaddwh.config.NameNodeInfo;
 import in.ac.iitkgp.acaddwh.exception.ETLException;
+import in.ac.iitkgp.acaddwh.exception.ExtractAndTransformException;
 import in.ac.iitkgp.acaddwh.exception.ExtractException;
-import in.ac.iitkgp.acaddwh.exception.WarehouseException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
-import in.ac.iitkgp.acaddwh.exception.TransformException;
 import in.ac.iitkgp.acaddwh.service.ETLService;
 import in.ac.iitkgp.acaddwh.service.RequestService;
 import in.ac.iitkgp.acaddwh.service.etl.dim.*;
 import in.ac.iitkgp.acaddwh.service.etl.fact.*;
 import in.ac.iitkgp.acaddwh.service.impl.RequestServiceImpl;
-import in.ac.iitkgp.acaddwh.util.HdfsFileTransfer;
+import in.ac.iitkgp.acaddwh.util.HdfsManager;
 
 public class ETLDriver implements Runnable {
 
@@ -128,88 +127,60 @@ public class ETLDriver implements Runnable {
 
 	private void drive(Class<?> etlClass)
 			throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-		int resultCount = 0;
-		long timeInitial, timePostExtract, timePostTransform, timePostWarehouse;
+		long timeInitial, timePostExtractAndTransform, timePostLoad;
 		String shortFileName;
 
 		ETLService<?> etlService = (ETLService<?>) etlClass.newInstance();
 
 		try {
-			
-			HdfsFileTransfer.copyFileToHdfs(absoluteFileNameWithoutExtn + ".csv");
-		
+
+			HdfsManager.copyFileToHdfs(absoluteFileNameWithoutExtn + ".csv");
+
 			shortFileName = new File(absoluteFileNameWithoutExtn + ".csv").getName();
-			
-			request.setStatus("Processing file..."+shortFileName);			
+
+			request.setStatus("Processing file..." + shortFileName);
 			requestService.updateLog(request);
-			
+
 			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
 					/ 1000000;
-			
-			DepartmentETL.extractAndTransform(shortFileName, request.getInstituteKey(), absoluteFileNameWithoutExtn + "-report.txt");
-			
-			request.setStatus("Processed file..."+shortFileName);			
+
+			boolean extractAndTransformReturnValue = etlService.extractAndTransform(shortFileName, request.getInstituteKey(),
+					absoluteFileNameWithoutExtn + "-report.txt");
+			timePostExtractAndTransform = ManagementFactory.getThreadMXBean()
+					.getThreadCpuTime(Thread.currentThread().getId()) / 1000000;
+			if(!extractAndTransformReturnValue) {
+				System.out.println("[" + shortFileName + "]: ExtractAndTransformException thrown!");
+				throw (new ExtractAndTransformException());
+			}
+			System.out.println("[" + shortFileName + "]: Extracted and Transformed!");
+			request.setStatus("Extraction and Transformation completed, Loading..." + "<br/> E&T: "
+					+ (timePostExtractAndTransform - timeInitial));
 			requestService.updateLog(request);
-			
-			
-//			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-//					/ 1000000;
-//
-//			List<?> items = etlService.extract(absoluteFileNameWithoutExtn + ".csv", ",",
-//					absoluteFileNameWithoutExtn + "-report.txt");
-//			timePostExtract = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-//					/ 1000000;
-//			System.out.println("Extracted " + items.size() + " items");
-//			request.setStatus("Extraction completed, Transforming..." + "<br/> E: " + (timePostExtract - timeInitial));
-//			requestService.updateLog(request);
-//
-//			resultCount = etlService.transform(items, request.getInstituteKey(),
-//					absoluteFileNameWithoutExtn + "-report.txt");
-//			timePostTransform = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-//					/ 1000000;
-//			System.out.println("Transformed " + resultCount + " items");
-//			request.setStatus("Transformation completed, Loading..." + "<br/> E: " + (timePostExtract - timeInitial)
-//					+ "<br/> T: " + (timePostTransform - timePostExtract));
-//			requestService.updateLog(request);
-//
-//
-//			/*
-//			 * Save warehoused output to "-hive.csv" file, and send to hadoop
-//			 * node
-//			 */
-//			ItemDSO.writeTransformedCSV(items, absoluteFileNameWithoutExtn + "-hive.csv");
-//			String hadoopLocalFileName = SCP.sendToHadoopNode(absoluteFileNameWithoutExtn + "-hive.csv");
-//			
-//
-//			etlService.warehouse(hadoopLocalFileName, absoluteFileNameWithoutExtn + "-report.txt");
-//			timePostWarehouse = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-//					/ 1000000;
-//			System.out.println("Warehoused " + hadoopLocalFileName);
-//			request.setStatus("ETL Process completed successfully" + "<br/> E: " + (timePostExtract - timeInitial)
-//					+ "<br/> T: " + (timePostTransform - timePostExtract) + "<br/> L/W: "
-//					+ (timePostWarehouse - timePostTransform) + "<br/> ETL/W: " + (timePostWarehouse - timeInitial));
-//			requestService.updateLog(request);
-//
-//		} catch (ExtractException e) {
-//			System.out.println("Extraction failed!");
-//			request.setStatus("Extraction failed, ETL Aborted");
-//			requestService.updateLog(request);
-//
-//		} catch (TransformException e) {
-//			System.out.println("Transformation failed!");
-//			request.setStatus("Transformation failed, ETL Aborted");
-//			requestService.updateLog(request);
-//
-//		} catch (LoadException e) {
-//			System.out.println("Loading failed!");
-//			request.setStatus("Loading failed, ETL Aborted");
-//			requestService.updateLog(request);
-//
-//		} catch (WarehouseException e) {
-//			System.out.println("Warehousing failed!");
-//			request.setStatus("Warehousing failed, ETL completed upto Loading phase");
-//			requestService.updateLog(request);
-//
+
+			List<String> partFilePaths = HdfsManager.getPartFilePaths(NameNodeInfo.getUrl()
+					+ HadoopNodeInfo.getPathInHdfs() + "outputDir_" + shortFileName.replace(".", "_"));
+			for (String partFilePath : partFilePaths) {
+				etlService.load(partFilePath, absoluteFileNameWithoutExtn + "-report.txt");
+			}
+			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
+					/ 1000000;
+			System.out.println("[" + shortFileName + "]: Loaded!");
+			request.setStatus(
+					"ETL Process completed successfully" + "<br/> E&T: " + (timePostExtractAndTransform - timeInitial)
+							+ "<br/> L: " + (timePostLoad - timePostExtractAndTransform) + "<br/> ETL: "
+							+ (timePostLoad - timeInitial));
+			requestService.updateLog(request);
+
+		} catch (ExtractAndTransformException e) {
+			System.out.println("Extraction/Transformation failed!");
+			request.setStatus("Extraction/Transformation failed, ETL Aborted");
+			requestService.updateLog(request);
+
+		} catch (LoadException e) {
+			System.out.println("Loading failed!");
+			request.setStatus("Loading failed, ETL Aborted");
+			requestService.updateLog(request);
+
 		} catch (Exception e) {
 			System.out.println("Exeption occurred!");
 			request.setStatus(request.getStatus() + " Aborted!");

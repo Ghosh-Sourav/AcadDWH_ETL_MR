@@ -72,4 +72,11 @@ public class Student extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = studentCode + "," + splKey + "," + studentNoa + "," + studentGender + "," + admissionYear;
+		return line;
+	}
+
 }

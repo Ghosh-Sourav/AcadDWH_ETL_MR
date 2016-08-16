@@ -39,4 +39,11 @@ public class EvalArea extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = evalAreaCode + "," + evalArea;
+		return line;
+	}
+
 }

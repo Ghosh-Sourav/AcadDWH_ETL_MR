@@ -48,4 +48,11 @@ public class Time extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = timeCode + "," + acadsemester + "," + acadsession;
+		return line;
+	}
+
 }

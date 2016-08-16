@@ -104,4 +104,12 @@ public class Course extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = courseCode + "," + courseName + "," + courseType + "," + courseDept + "," + courseCrd + ","
+				+ courseLectureHour + "," + courseTutorialHour + "," + coursePracticalHour + "," + courseLevel;
+		return line;
+	}
+
 }

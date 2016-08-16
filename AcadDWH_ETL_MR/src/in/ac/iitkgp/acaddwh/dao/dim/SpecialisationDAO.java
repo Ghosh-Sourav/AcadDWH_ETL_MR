@@ -30,13 +30,13 @@ public class SpecialisationDAO {
 		return returnValue;
 	}
 
-	public int addToHive(Connection con, String hadoopLocalFileName) throws SQLException {
+	public int addToHive(Connection con, String partFilePath) throws SQLException {
 		int returnValue = 0;
 		PreparedStatement ps = null;
 
 		try {
-			ps = con.prepareStatement("LOAD DATA LOCAL INPATH ? INTO TABLE acaddwh.dim_specialisations");
-			ps.setString(1, hadoopLocalFileName);
+			ps = con.prepareStatement("LOAD DATA INPATH ? INTO TABLE acaddwh.dim_specialisations");
+			ps.setString(1, partFilePath);
 
 			returnValue = ps.executeUpdate();
 

@@ -42,6 +42,14 @@ public class Institute extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		/* Special case for Institute bean as it has no separate code and key */
+		line = instituteKey + "," + instituteName + "," + institutePassword;
+		return line;
+	}
+
 	// public String getInstituteCategory() {
 	// return instituteCategory;
 	// }

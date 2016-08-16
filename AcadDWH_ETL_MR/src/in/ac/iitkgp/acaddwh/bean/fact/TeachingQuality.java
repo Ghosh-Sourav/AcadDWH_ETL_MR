@@ -76,4 +76,12 @@ public class TeachingQuality extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = courseKey + "," + timeKey + "," + teacherKey + "," + evalAreaKey + "," + noOfEvaluation + ","
+				+ avgTeachingQuality;
+		return line;
+	}
+
 }

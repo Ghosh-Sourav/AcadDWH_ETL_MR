@@ -76,4 +76,12 @@ public class SemPerformance extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = splKey + "," + studentKey + "," + cgpa + "," + courseRegistered + "," + creditRegistered + ","
+				+ courseFailed;
+		return line;
+	}
+
 }

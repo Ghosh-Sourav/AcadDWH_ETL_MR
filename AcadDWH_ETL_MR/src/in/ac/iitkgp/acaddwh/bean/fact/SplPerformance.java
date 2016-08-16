@@ -94,4 +94,12 @@ public class SplPerformance extends Item {
 		return line;
 	}
 
+	@Override
+	public String getPrintableLineWithoutKeyAndNewLine() {
+		String line;
+		line = splKey + "," + timeKey + "," + admStuCnt + "," + onrollStuCnt + "," + gradStuCnt + "," + dropoutStuCnt
+				+ "," + percentPlaced + "," + avgSalary;
+		return line;
+	}
+
 }
