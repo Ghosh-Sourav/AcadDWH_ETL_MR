@@ -138,23 +138,23 @@ public class ETLDriver implements Runnable {
 
 			shortFileName = new File(absoluteFileNameWithoutExtn + ".csv").getName();
 
-			request.setStatus("Processing file..." + shortFileName);
+			request.setStatus("Extracting and Transforming..." + "<br/> Split: " + HadoopNodeInfo.getSplitSize());
 			requestService.updateLog(request);
 
 			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
 					/ 1000000;
 
-			boolean extractAndTransformReturnValue = etlService.extractAndTransform(shortFileName, request.getInstituteKey(),
-					absoluteFileNameWithoutExtn + "-report.txt");
+			boolean extractAndTransformReturnValue = etlService.extractAndTransform(shortFileName,
+					request.getInstituteKey(), absoluteFileNameWithoutExtn + "-report.txt");
 			timePostExtractAndTransform = ManagementFactory.getThreadMXBean()
 					.getThreadCpuTime(Thread.currentThread().getId()) / 1000000;
-			if(!extractAndTransformReturnValue) {
+			if (!extractAndTransformReturnValue) {
 				System.out.println("[" + shortFileName + "]: ExtractAndTransformException thrown!");
 				throw (new ExtractAndTransformException());
 			}
 			System.out.println("[" + shortFileName + "]: Extracted and Transformed!");
-			request.setStatus("Extraction and Transformation completed, Loading..." + "<br/> E&T: "
-					+ (timePostExtractAndTransform - timeInitial));
+			request.setStatus("Extraction and Transformation completed, Loading..." + "<br/> Split: "
+					+ HadoopNodeInfo.getSplitSize() + "<br/> E&T: " + (timePostExtractAndTransform - timeInitial));
 			requestService.updateLog(request);
 
 			List<String> partFilePaths = HdfsManager.getPartFilePaths(NameNodeInfo.getUrl()
@@ -165,10 +165,9 @@ public class ETLDriver implements Runnable {
 			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
 					/ 1000000;
 			System.out.println("[" + shortFileName + "]: Loaded!");
-			request.setStatus(
-					"ETL Process completed successfully" + "<br/> E&T: " + (timePostExtractAndTransform - timeInitial)
-							+ "<br/> L: " + (timePostLoad - timePostExtractAndTransform) + "<br/> ETL: "
-							+ (timePostLoad - timeInitial));
+			request.setStatus("ETL Process completed successfully" + "<br/> Split: " + HadoopNodeInfo.getSplitSize()
+					+ "<br/> E&T: " + (timePostExtractAndTransform - timeInitial) + "<br/> L: "
+					+ (timePostLoad - timePostExtractAndTransform) + "<br/> ETL: " + (timePostLoad - timeInitial));
 			requestService.updateLog(request);
 
 		} catch (ExtractAndTransformException e) {

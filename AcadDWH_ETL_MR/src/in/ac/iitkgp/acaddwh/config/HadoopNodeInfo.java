@@ -13,6 +13,9 @@ public class HadoopNodeInfo {
 	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH/AcadDWH_Data/";
 	private static String pathInHdfs = "/user/15CS60R16/AcadDWH/AcadDWH_Data/";
 
+	private static long splitSize = 8 * 1024 * 1024; // in bytes
+	private static long dfsBlockSize = 64 * 1024 * 1024; // in bytes
+
 	public static String getHadoopNodeIP() {
 		return hadoopNodeIP;
 	}
@@ -35,6 +38,14 @@ public class HadoopNodeInfo {
 
 	public static String getPathInHdfs() {
 		return pathInHdfs;
+	}
+
+	public static long getSplitSize() {
+		return splitSize;
+	}
+
+	public static long getDfsBlockSize() {
+		return dfsBlockSize;
 	}
 
 }
