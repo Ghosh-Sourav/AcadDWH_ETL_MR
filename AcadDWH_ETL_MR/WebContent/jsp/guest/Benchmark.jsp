@@ -19,7 +19,7 @@
 				.replace(institute_key + "_", "");
 		long rows = FileStats.getLineCount(etlRequest.getFileNameWithoutExtn() + ".csv");
 		long size = FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn() + ".csv");
-		String timeStats = etlRequest.getStatus().replace("ETL Process completed successfully<br/> Split: ", ",")
+		String timeStats = etlRequest.getStatus().replace("ETL Process completed successfully<br/> Split: ", "")
 				.replace("<br/> E&T: ", ",").replace("<br/> L: ", ",").replace("<br/> ETL: ", ",")
 				.replace("<br />", "");
 
