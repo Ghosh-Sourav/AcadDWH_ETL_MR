@@ -23,7 +23,7 @@
 				.replace("<br/> E&T: ", ",").replace("<br/> L: ", ",").replace("<br/> ETL: ", ",")
 				.replace("<br />", "");
 
-		if (etlRequest.getStatus().contains("ETL Process completed successfully<br/> E: ")) {
+		if (etlRequest.getStatus().contains("ETL Process completed successfully<br/>")) {
 %><%=institute_key%>,<%=df%>,<%=rows%>,<%=size%>,<%=timeStats%><br/>
 <%
 	}
