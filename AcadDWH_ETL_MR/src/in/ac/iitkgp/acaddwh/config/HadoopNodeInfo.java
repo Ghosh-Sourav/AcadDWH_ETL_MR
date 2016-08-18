@@ -1,5 +1,7 @@
 package in.ac.iitkgp.acaddwh.config;
 
+import in.ac.iitkgp.acaddwh.util.FileStats;
+
 public class HadoopNodeInfo {
 
 	private static String hadoopNodeIP =
@@ -13,7 +15,13 @@ public class HadoopNodeInfo {
 	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH/AcadDWH_Data/";
 	private static String pathInHdfs = "/user/15CS60R16/AcadDWH/AcadDWH_Data/";
 
-	private static long splitSize = 8 * 1024 * 1024; // in bytes
+	private enum MapCount {
+		ONE_MAPPER, PROPORTIONAL_TO_FILESIZE
+	}
+
+	private static MapCount no_of_mappersRequired = MapCount.ONE_MAPPER;
+
+	private static long splitSize = 2 * 1024 * 1024; // in bytes
 	private static long dfsBlockSize = 1 * 1024 * 1024; // in bytes
 
 	public static String getHadoopNodeIP() {
@@ -42,6 +50,17 @@ public class HadoopNodeInfo {
 
 	public static long getSplitSize() {
 		return splitSize;
+	}
+
+	public static long getSplitSize(String shortFileName) {
+		if (no_of_mappersRequired == MapCount.ONE_MAPPER) {
+			return FileStats.getSizeInBytes(shortFileName);
+		} else if (no_of_mappersRequired == MapCount.PROPORTIONAL_TO_FILESIZE) {
+			return splitSize;
+		} else {
+			return -1;
+		}
+
 	}
 
 	public static long getDfsBlockSize() {

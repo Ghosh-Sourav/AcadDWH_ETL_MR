@@ -61,8 +61,8 @@ public class StudentETL implements ETLService<Student> {
 			Configuration conf = new Configuration();
 			conf.set("key.value.separator.in.input.line", ",");
 			conf.set("mapred.textoutputformat.separator", ",");
-			conf.set("mapred.min.split.size", HadoopNodeInfo.getSplitSize()+"");
-			conf.set("mapred.max.split.size", HadoopNodeInfo.getSplitSize()+"");
+			conf.set("mapred.min.split.size", HadoopNodeInfo.getSplitSize(shortFileName)+"");
+			conf.set("mapred.max.split.size", HadoopNodeInfo.getSplitSize(shortFileName)+"");
 			conf.set("dfs.block.size", HadoopNodeInfo.getDfsBlockSize()+"");			
 			conf.set("instituteCode", instituteCode);
 

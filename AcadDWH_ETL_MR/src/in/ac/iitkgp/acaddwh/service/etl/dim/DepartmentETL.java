@@ -21,7 +21,6 @@ import in.ac.iitkgp.acaddwh.dao.dim.DepartmentDAO;
 import in.ac.iitkgp.acaddwh.exception.ExtractAndTransformException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
 import in.ac.iitkgp.acaddwh.service.ETLService;
-import in.ac.iitkgp.acaddwh.util.FileStats;
 import in.ac.iitkgp.acaddwh.util.HiveConnection;
 import in.ac.iitkgp.acaddwh.util.LogFile;
 
@@ -58,12 +57,8 @@ public class DepartmentETL implements ETLService<Department> {
 			Configuration conf = new Configuration();
 			conf.set("key.value.separator.in.input.line", ",");
 			conf.set("mapred.textoutputformat.separator", ",");
-			//conf.set("mapred.min.split.size", HadoopNodeInfo.getSplitSize()+"");
-			//conf.set("mapred.max.split.size", HadoopNodeInfo.getSplitSize()+"");
-			
-			conf.set("mapred.min.split.size", FileStats.getSizeInBytes(shortFileName)+"");
-			conf.set("mapred.max.split.size", FileStats.getSizeInBytes(shortFileName)+"");
-			
+			conf.set("mapred.min.split.size", HadoopNodeInfo.getSplitSize(shortFileName)+"");
+			conf.set("mapred.max.split.size", HadoopNodeInfo.getSplitSize(shortFileName)+"");
 			conf.set("dfs.block.size", HadoopNodeInfo.getDfsBlockSize()+"");			
 			conf.set("instituteCode", instituteCode);
 

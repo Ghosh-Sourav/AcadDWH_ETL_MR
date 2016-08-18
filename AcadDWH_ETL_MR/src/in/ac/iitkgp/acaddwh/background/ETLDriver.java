@@ -20,7 +20,6 @@ import in.ac.iitkgp.acaddwh.service.RequestService;
 import in.ac.iitkgp.acaddwh.service.etl.dim.*;
 import in.ac.iitkgp.acaddwh.service.etl.fact.*;
 import in.ac.iitkgp.acaddwh.service.impl.RequestServiceImpl;
-import in.ac.iitkgp.acaddwh.util.FileStats;
 import in.ac.iitkgp.acaddwh.util.HdfsManager;
 
 public class ETLDriver implements Runnable {
@@ -139,7 +138,8 @@ public class ETLDriver implements Runnable {
 
 			shortFileName = new File(absoluteFileNameWithoutExtn + ".csv").getName();
 
-			request.setStatus("Extracting and Transforming..." + "<br/> Split: " + HadoopNodeInfo.getSplitSize());
+			request.setStatus(
+					"Extracting and Transforming..." + "<br/> Split: " + HadoopNodeInfo.getSplitSize(shortFileName));
 			requestService.updateLog(request);
 
 			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
@@ -155,7 +155,8 @@ public class ETLDriver implements Runnable {
 			}
 			System.out.println("[" + shortFileName + "]: Extracted and Transformed!");
 			request.setStatus("Extraction and Transformation completed, Loading..." + "<br/> Split: "
-					+ HadoopNodeInfo.getSplitSize() + "<br/> E&T: " + (timePostExtractAndTransform - timeInitial));
+					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> E&T: "
+					+ (timePostExtractAndTransform - timeInitial));
 			requestService.updateLog(request);
 
 			List<String> partFilePaths = HdfsManager.getPartFilePaths(NameNodeInfo.getUrl()
@@ -166,8 +167,9 @@ public class ETLDriver implements Runnable {
 			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
 					/ 1000000;
 			System.out.println("[" + shortFileName + "]: Loaded!");
-			request.setStatus("ETL Process completed successfully" + "<br/> Split: " + FileStats.getSizeInBytes(shortFileName)
-					+ "<br/> E&T: " + (timePostExtractAndTransform - timeInitial) + "<br/> L: "
+			request.setStatus("ETL Process completed successfully" + "<br/> Split: "
+					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> E&T: "
+					+ (timePostExtractAndTransform - timeInitial) + "<br/> L: "
 					+ (timePostLoad - timePostExtractAndTransform) + "<br/> ETL: " + (timePostLoad - timeInitial));
 			requestService.updateLog(request);
 
