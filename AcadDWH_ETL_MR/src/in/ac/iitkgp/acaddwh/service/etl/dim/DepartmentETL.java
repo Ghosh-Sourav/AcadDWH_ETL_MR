@@ -67,6 +67,7 @@ public class DepartmentETL implements ETLService<Department> {
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			job.setInputFormatClass(KeyValueTextInputFormat.class);
+			job.setNumReduceTasks(0);
 
 			FileInputFormat.addInputPath(job,
 					new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs() + shortFileName));

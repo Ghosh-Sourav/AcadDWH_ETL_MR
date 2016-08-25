@@ -168,8 +168,8 @@ public class ETLDriver implements Runnable {
 					/ 1000000;
 			System.out.println("[" + shortFileName + "]: Loaded!");
 			request.setStatus("ETL Process completed successfully" + "<br/> Split: "
-					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> E&T: "
-					+ (timePostExtractAndTransform - timeInitial) + "<br/> L: "
+					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> Mappers: " + partFilePaths.size()
+					+ "<br/> E&T: " + (timePostExtractAndTransform - timeInitial) + "<br/> L: "
 					+ (timePostLoad - timePostExtractAndTransform) + "<br/> ETL: " + (timePostLoad - timeInitial));
 			requestService.updateLog(request);
 
