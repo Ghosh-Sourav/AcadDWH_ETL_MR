@@ -1,3 +1,4 @@
+<%@page import="in.ac.iitkgp.acaddwh.config.HadoopNodeInfo"%>
 <%@page import="in.ac.iitkgp.acaddwh.config.ProjectInfo"%>
 <%@page import="java.util.LinkedHashMap"%>
 <%@page import="java.util.Map"%>
@@ -23,6 +24,35 @@
 %>
 <h1>ETL Processes</h1>
 <hr />
+<blockquote>
+	<b>No of mappers required:</b>
+	<%
+		if (HadoopNodeInfo.getNo_of_mappersRequired() == HadoopNodeInfo.MapCount.ONE_MAPPER) {
+	%><mark>1</mark>
+	<%
+		} else if (HadoopNodeInfo.getNo_of_mappersRequired() == HadoopNodeInfo.MapCount.TWO_MAPPERS) {
+	%><mark>2</mark>
+	<%
+		} else {
+	%><mark>Proportional to input file size</mark>
+	<%
+		}
+	%>
+</blockquote>
+
+<blockquote>
+	<b>Is Reducer to be used:</b>
+	<%
+		if (HadoopNodeInfo.isReducerToBeUsed()) {
+	%><mark>YES</mark>
+	<%
+		} else {
+	%><mark>NO</mark>
+	<%
+		}
+	%>
+</blockquote>
+	
 <blockquote>
 	<b>Constraint Validation:</b>
 	<%

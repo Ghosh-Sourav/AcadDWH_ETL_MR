@@ -9,7 +9,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.KeyValueTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -21,12 +20,13 @@ import in.ac.iitkgp.acaddwh.dao.fact.TeachingQualityDAO;
 import in.ac.iitkgp.acaddwh.exception.ExtractAndTransformException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
 import in.ac.iitkgp.acaddwh.service.ETLService;
+import in.ac.iitkgp.acaddwh.service.etl.GenericETMapper;
 import in.ac.iitkgp.acaddwh.util.HiveConnection;
 import in.ac.iitkgp.acaddwh.util.LogFile;
 
 public class TeachingQualityETL implements ETLService<TeachingQuality> {
 
-	public static class ETMapper extends Mapper<Text, Text, Text, Text> {
+	public static class ETMapper extends GenericETMapper {
 		private Text attributes = new Text();
 
 		public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
@@ -74,6 +74,9 @@ public class TeachingQualityETL implements ETLService<TeachingQuality> {
 			job.setOutputKeyClass(Text.class);
 			job.setOutputValueClass(Text.class);
 			job.setInputFormatClass(KeyValueTextInputFormat.class);
+			if (!HadoopNodeInfo.isReducerToBeUsed()) {
+				job.setNumReduceTasks(0);
+			}
 
 			FileInputFormat.addInputPath(job,
 					new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs() + shortFileName));

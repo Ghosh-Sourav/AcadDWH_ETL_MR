@@ -48,6 +48,7 @@
 				<%=etlRequest.getFileNameWithoutExtn().substring(etlRequest.getFileNameWithoutExtn().indexOf("_")+1)%><br/>
 				Rows: <%=FileStats.getLineCount(etlRequest.getFileNameWithoutExtn()+".csv") %><br/>
 				Size (in B): <%=FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn()+".csv") %>
+				Size (in MB): <%=FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn()+".csv") / 1024 %>
 			</td>
 			<td><%=etlRequest.getStatus() %></td>
 			<td>

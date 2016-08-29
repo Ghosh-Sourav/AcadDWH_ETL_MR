@@ -15,11 +15,12 @@ public class HadoopNodeInfo {
 	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH/AcadDWH_Data/";
 	private static String pathInHdfs = "/user/15CS60R16/AcadDWH/AcadDWH_Data/";
 
-	private enum MapCount {
-		ONE_MAPPER, PROPORTIONAL_TO_FILESIZE
+	public enum MapCount {
+		ONE_MAPPER, TWO_MAPPERS, PROPORTIONAL_TO_FILESIZE
 	}
 
-	private static MapCount no_of_mappersRequired = MapCount.ONE_MAPPER;
+	private static MapCount no_of_mappersRequired = MapCount.PROPORTIONAL_TO_FILESIZE;
+	private static boolean reducerToBeUsed = true;
 
 	private static long splitSize = 2 * 1024 * 1024; // in bytes
 	private static long dfsBlockSize = 1 * 1024 * 1024; // in bytes
@@ -48,6 +49,14 @@ public class HadoopNodeInfo {
 		return pathInHdfs;
 	}
 
+	public static MapCount getNo_of_mappersRequired() {
+		return no_of_mappersRequired;
+	}
+
+	public static boolean isReducerToBeUsed() {
+		return reducerToBeUsed;
+	}
+
 	public static long getSplitSize() {
 		return splitSize;
 	}
@@ -55,6 +64,8 @@ public class HadoopNodeInfo {
 	public static long getSplitSize(String shortFileName) {
 		if (no_of_mappersRequired == MapCount.ONE_MAPPER) {
 			return FileStats.getSizeInBytes(shortFileName);
+		} else if (no_of_mappersRequired == MapCount.TWO_MAPPERS) {
+			return FileStats.getSizeInBytes(shortFileName) / 2;
 		} else if (no_of_mappersRequired == MapCount.PROPORTIONAL_TO_FILESIZE) {
 			return splitSize;
 		} else {
