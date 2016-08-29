@@ -17,9 +17,11 @@ import in.ac.iitkgp.acaddwh.exception.ExtractException;
 import in.ac.iitkgp.acaddwh.exception.LoadException;
 import in.ac.iitkgp.acaddwh.service.ETLService;
 import in.ac.iitkgp.acaddwh.service.RequestService;
+import in.ac.iitkgp.acaddwh.service.etl.ETLHelper;
 import in.ac.iitkgp.acaddwh.service.etl.dim.*;
 import in.ac.iitkgp.acaddwh.service.etl.fact.*;
 import in.ac.iitkgp.acaddwh.service.impl.RequestServiceImpl;
+import in.ac.iitkgp.acaddwh.util.FileStats;
 import in.ac.iitkgp.acaddwh.util.HdfsManager;
 
 public class ETLDriver implements Runnable {
@@ -142,13 +144,12 @@ public class ETLDriver implements Runnable {
 					"Extracting and Transforming..." + "<br/> Split: " + HadoopNodeInfo.getSplitSize(shortFileName));
 			requestService.updateLog(request);
 
-			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-					/ 1000000;
+			timeInitial = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId());
 
 			boolean extractAndTransformReturnValue = etlService.extractAndTransform(shortFileName,
 					request.getInstituteKey(), absoluteFileNameWithoutExtn + "-report.txt");
 			timePostExtractAndTransform = ManagementFactory.getThreadMXBean()
-					.getThreadCpuTime(Thread.currentThread().getId()) / 1000000;
+					.getThreadCpuTime(Thread.currentThread().getId());
 			if (!extractAndTransformReturnValue) {
 				System.out.println("[" + shortFileName + "]: ExtractAndTransformException thrown!");
 				throw (new ExtractAndTransformException());
@@ -164,13 +165,27 @@ public class ETLDriver implements Runnable {
 			for (String partFilePath : partFilePaths) {
 				etlService.load(partFilePath, absoluteFileNameWithoutExtn + "-report.txt");
 			}
-			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId())
-					/ 1000000;
+			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId());
 			System.out.println("[" + shortFileName + "]: Loaded!");
-			request.setStatus("ETL Process completed successfully" + "<br/> Split: "
-					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> Mappers: " + partFilePaths.size()
-					+ "<br/> E&T: " + (timePostExtractAndTransform - timeInitial) + "<br/> L: "
-					+ (timePostLoad - timePostExtractAndTransform) + "<br/> ETL: " + (timePostLoad - timeInitial));
+
+			Long etMaxTaskTime = ETLHelper.getMaxTimeTakenInfo("extractAndTransform_" + shortFileName);
+			Long etTaskTotalTime = ETLHelper.getTotalTimeTakenInfo("extractAndTransform_" + shortFileName);
+			ETLHelper.removeMaxTimeTakenInfo("extractAndTransform_" + shortFileName);
+			long effectiveETLTime = (timePostLoad - timePostExtractAndTransform) + etMaxTaskTime;
+
+			System.out.println("Size of " + (absoluteFileNameWithoutExtn + ".csv") + " is "
+					+ (FileStats.getSizeInBytes(shortFileName)));
+
+			request.setStatus("ETL Process completed successfully" + "<br/> Split (in B): "
+					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> Mappers (Recorded): "
+					+ ((!HadoopNodeInfo.isReducerToBeUsed()) ? partFilePaths.size() : "-1")
+					+ "<br/> Mappers (Estimated): "
+					+ (FileStats.getSizeInBytes(shortFileName)
+							/ HadoopNodeInfo.getSplitSize(shortFileName))
+					+ "<br/> E&T MR Max Task Time (ns): " + etMaxTaskTime + "<br/> E&T MR Total Task Time (ns): "
+					+ etTaskTotalTime + "<br/> E&T Thread (ns): " + (timePostExtractAndTransform - timeInitial)
+					+ "<br/> L (ns): " + (timePostLoad - timePostExtractAndTransform) + "<br/> Effective ETL (ns): "
+					+ effectiveETLTime);
 			requestService.updateLog(request);
 
 		} catch (ExtractAndTransformException e) {

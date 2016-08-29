@@ -49,6 +49,7 @@ public class FileStats {
 			size = (new File(absoluteFileName).length());
 		} catch (Exception e) {
 			size = -1;
+			e.printStackTrace();
 		}
 		return size;
 	}
