@@ -46,9 +46,11 @@
 			<td><a href="/acaddwh/DownloadController?filename=<%=etlRequest.getFileNameWithoutExtn()%>.csv" target="_blank">View CSV file</a></td>
 			<td>
 				<%=etlRequest.getFileNameWithoutExtn().substring(etlRequest.getFileNameWithoutExtn().indexOf("_")+1)%><br/>
+				<%--
 				Rows: <%=FileStats.getLineCount(etlRequest.getFileNameWithoutExtn()+".csv") %><br/>
-				Size (in B): <%=FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn()+".csv") %>
+				Size (in B): <%=FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn()+".csv") %><br/>
 				Size (in MB): <%=FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn()+".csv") / 1024 %>
+				 --%>
 			</td>
 			<td><%=etlRequest.getStatus() %></td>
 			<td>

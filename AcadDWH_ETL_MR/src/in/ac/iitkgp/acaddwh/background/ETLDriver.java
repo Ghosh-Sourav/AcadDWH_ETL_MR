@@ -3,6 +3,8 @@ package in.ac.iitkgp.acaddwh.background;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 
@@ -73,7 +75,6 @@ public class ETLDriver implements Runnable {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private boolean deleteFile(String fileName) {
 		return new File(fileName).delete();
 	}
@@ -125,6 +126,29 @@ public class ETLDriver implements Runnable {
 			throw (new ExtractException());
 		}
 		drive(etlClass);
+
+		// TODO: This FOR loop is for evaluating; needs to be removed
+		/* EVAL CODE: BEGIN */
+		String originalRequestKey = request.getRequestKey();
+		String originalAbsoluteFileNameWithoutExtn = absoluteFileNameWithoutExtn;
+		for (int i = 0; i < 99; i++) {
+			Path srcPath = new File(originalAbsoluteFileNameWithoutExtn + ".csv").toPath();
+			Path destPath = new File(originalAbsoluteFileNameWithoutExtn + "_" + i + ".csv").toPath();
+			absoluteFileNameWithoutExtn = originalAbsoluteFileNameWithoutExtn + "_" + i;
+			try {
+				Files.copy(srcPath, destPath);
+				request.setRequestKey(originalRequestKey + "_" + i);
+				drive(etlClass);
+				deleteFile(absoluteFileNameWithoutExtn + ".csv");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		absoluteFileNameWithoutExtn = originalAbsoluteFileNameWithoutExtn;
+		/* EVAL CODE: END */
+		
+		deleteFile(absoluteFileNameWithoutExtn + ".csv");
+		
 	}
 
 	private void drive(Class<?> etlClass)
@@ -176,12 +200,14 @@ public class ETLDriver implements Runnable {
 			System.out.println("Size of " + (absoluteFileNameWithoutExtn + ".csv") + " is "
 					+ (FileStats.getSizeInBytes(shortFileName)));
 
-			request.setStatus("ETL Process completed successfully" + "<br/> Split (in B): "
+			request.setStatus("ETL Process completed successfully" + "<br/> Rows: "
+					+ FileStats.getLineCount(shortFileName) + "<br/> Input File Size (in B): "
+							+ FileStats.getSizeInBytes(shortFileName) + "<br/> Split (in B): "
 					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> Mappers (Recorded): "
 					+ ((!HadoopNodeInfo.isReducerToBeUsed()) ? partFilePaths.size() : "-1")
 					+ "<br/> Mappers (Estimated): "
-					+ (FileStats.getSizeInBytes(shortFileName)
-							/ HadoopNodeInfo.getSplitSize(shortFileName))
+					+ Math.ceil((double) FileStats.getSizeInBytes(shortFileName)
+							/ (double) HadoopNodeInfo.getSplitSize(shortFileName))
 					+ "<br/> E&T MR Max Task Time (ns): " + etMaxTaskTime + "<br/> E&T MR Total Task Time (ns): "
 					+ etTaskTotalTime + "<br/> E&T Thread (ns): " + (timePostExtractAndTransform - timeInitial)
 					+ "<br/> L (ns): " + (timePostLoad - timePostExtractAndTransform) + "<br/> Effective ETL (ns): "

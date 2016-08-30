@@ -17,10 +17,12 @@
 		String df = etlRequest.getFileNameWithoutExtn()
 				.substring(etlRequest.getFileNameWithoutExtn().indexOf("_") + 1)
 				.replace(institute_key + "_", "");
-		long rows = FileStats.getLineCount(etlRequest.getFileNameWithoutExtn() + ".csv");
-		long size = FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn() + ".csv");
+		//long rows = FileStats.getLineCount(etlRequest.getFileNameWithoutExtn() + ".csv");
+		//long size = FileStats.getSizeInBytes(etlRequest.getFileNameWithoutExtn() + ".csv");
 		String timeStats = etlRequest.getStatus()
-				.replace("ETL Process completed successfully<br/> Split (in B): ", "")
+				.replace("ETL Process completed successfully<br/> Rows: ", "")
+				.replace("<br/> Input File Size (in B): ", ",")
+				.replace("<br/> Split (in B): ", ",")
 				.replace("<br/> Mappers (Recorded): ", ",")
 				.replace("<br/> Mappers (Estimated): ",",")
 				.replace("<br/> E&T MR Max Task Time (ns): ", ",")
@@ -31,7 +33,7 @@
 				.replace("<br />", "");
 
 		if (etlRequest.getStatus().contains("ETL Process completed successfully<br/>")) {
-%><%=institute_key%>,<%=df%>,<%=rows%>,<%=size%>,<%=timeStats%><br/>
+%><%=institute_key%>,<%=df%>,<%=timeStats%><br/>
 <%
 	}
 	}

@@ -27,10 +27,10 @@ import in.ac.iitkgp.acaddwh.util.KeyRepository;
  */
 @WebServlet(asyncSupported = true, urlPatterns = { "/ETLController" })
 @MultipartConfig(location = "/home/mtech/15CS60R16/AcadDWH/tempUpload", fileSizeThreshold = 2000000000, maxFileSize = -1, maxRequestSize = -1) /*
-																																								 * Sizes
-																																								 * in
-																																								 * B
-																																								 */
+																																				 * Sizes
+																																				 * in
+																																				 * B
+																																				 */
 public class ETLController extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
@@ -82,6 +82,17 @@ public class ETLController extends HttpServlet {
 				if (requestService.addLog(etlRequest) == 0) {
 					throw (new Exception());
 				}
+				// TODO: This FOR loop is for evaluating; needs to be removed
+				for (int i = 0; i < 99; i++) {
+					Request newRequest = new Request();
+					newRequest.setRequestKey(etlRequest.getRequestKey() + "_" + i);
+					newRequest.setInstituteKey(etlRequest.getInstituteKey());
+					newRequest.setFileNameWithoutExtn(etlRequest.getFileNameWithoutExtn() + "_" + i);
+					newRequest.setStatus(etlRequest.getStatus());
+					if (requestService.addLog(newRequest) == 0) {
+						throw (new Exception());
+					}
+				}
 
 				Runnable runnable = new ETLDriver(etlRequest, df, absoluteFileNameWithoutExtn, parts);
 				Thread etlDriverThread = new Thread(runnable);
@@ -92,7 +103,7 @@ public class ETLController extends HttpServlet {
 			} catch (Exception e) {
 				e.printStackTrace();
 				session.setAttribute("msg", "ETL Process could not be initiated.");
-				session.setAttribute("msgClass", "alert-success");
+				session.setAttribute("msgClass", "alert-danger");
 			}
 
 			response.sendRedirect("jsp/institute/ETL.jsp");

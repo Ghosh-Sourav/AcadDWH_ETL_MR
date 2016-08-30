@@ -19,7 +19,7 @@ public class HadoopNodeInfo {
 		ONE_MAPPER, TWO_MAPPERS, PROPORTIONAL_TO_FILESIZE
 	}
 
-	private static MapCount no_of_mappersRequired = MapCount.PROPORTIONAL_TO_FILESIZE;
+	private static MapCount noOfMappersRequired = MapCount.PROPORTIONAL_TO_FILESIZE;
 	private static boolean reducerToBeUsed = true;
 
 	private static long splitSize = 2 * 1024 * 1024; // in bytes
@@ -49,8 +49,12 @@ public class HadoopNodeInfo {
 		return pathInHdfs;
 	}
 
-	public static MapCount getNo_of_mappersRequired() {
-		return no_of_mappersRequired;
+	public static MapCount getNoOfMappersRequired() {
+		return noOfMappersRequired;
+	}
+
+	public static void setNoOfMappersRequired(MapCount noOfMappersRequired) {
+		HadoopNodeInfo.noOfMappersRequired = noOfMappersRequired;
 	}
 
 	public static boolean isReducerToBeUsed() {
@@ -62,11 +66,11 @@ public class HadoopNodeInfo {
 	}
 
 	public static long getSplitSize(String shortFileName) {
-		if (no_of_mappersRequired == MapCount.ONE_MAPPER) {
+		if (noOfMappersRequired == MapCount.ONE_MAPPER) {
 			return FileStats.getSizeInBytes(shortFileName);
-		} else if (no_of_mappersRequired == MapCount.TWO_MAPPERS) {
+		} else if (noOfMappersRequired == MapCount.TWO_MAPPERS) {
 			return FileStats.getSizeInBytes(shortFileName) / 2;
-		} else if (no_of_mappersRequired == MapCount.PROPORTIONAL_TO_FILESIZE) {
+		} else if (noOfMappersRequired == MapCount.PROPORTIONAL_TO_FILESIZE) {
 			return splitSize;
 		} else {
 			return -1;
