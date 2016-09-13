@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -184,11 +185,14 @@ public class ETLDriver implements Runnable {
 					+ (timePostExtractAndTransform - timeInitial));
 			requestService.updateLog(request);
 
+			List<String> partFilePaths = new ArrayList<String>();
+			/*
 			List<String> partFilePaths = HdfsManager.getPartFilePaths(NameNodeInfo.getUrl()
 					+ HadoopNodeInfo.getPathInHdfs() + "outputDir_" + shortFileName.replace(".", "_"));
 			for (String partFilePath : partFilePaths) {
-				//etlService.load(partFilePath, absoluteFileNameWithoutExtn + "-report.txt");
+				etlService.load(partFilePath, absoluteFileNameWithoutExtn + "-report.txt");
 			}
+			*/
 			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId());
 			System.out.println("[" + shortFileName + "]: Loaded!");
 
@@ -219,12 +223,12 @@ public class ETLDriver implements Runnable {
 			request.setStatus("Extraction/Transformation failed, ETL Aborted");
 			requestService.updateLog(request);
 
-		} catch (LoadException e) {
+		} /*catch (LoadException e) {
 			System.out.println("Loading failed!");
 			request.setStatus("Loading failed, ETL Aborted");
 			requestService.updateLog(request);
 
-		} catch (Exception e) {
+		} */catch (Exception e) {
 			System.out.println("Exeption occurred!");
 			request.setStatus(request.getStatus() + " Aborted!");
 			requestService.updateLog(request);

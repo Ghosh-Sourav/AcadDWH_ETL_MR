@@ -13,8 +13,8 @@ public class HadoopNodeInfo {
 	private static String password = "";
 
 	private static String pathInHadoopLocal = "/home/mtech/15CS60R16/AcadDWH/AcadDWH_Data/";
-	//private static String pathInHdfs = "/user/15CS60R16/AcadDWH/AcadDWH_Data/";
-	private static String pathInHdfs = "/user/hive/warehouse/acaddwh.db/";
+	private static String pathInHdfs = "/user/15CS60R16/AcadDWH/AcadDWH_Data/";
+	private static String pathInWarehouse = "/user/hive/warehouse/acaddwh.db/";
 
 	public enum MapCount {
 		ONE_MAPPER, TWO_MAPPERS, PROPORTIONAL_TO_FILESIZE
@@ -48,6 +48,10 @@ public class HadoopNodeInfo {
 
 	public static String getPathInHdfs() {
 		return pathInHdfs;
+	}
+	
+	public static String getPathInWarehouse() {
+		return pathInWarehouse;
 	}
 
 	public static MapCount getNoOfMappersRequired() {
