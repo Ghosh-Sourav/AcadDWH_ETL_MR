@@ -74,8 +74,10 @@ public class DepartmentETL implements ETLService<Department> {
 
 			FileInputFormat.addInputPath(job,
 					new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs() + shortFileName));
+			/*FileOutputFormat.setOutputPath(job, new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
+					+ "outputDir_" + shortFileName.replace(".", "_")));*/
 			FileOutputFormat.setOutputPath(job, new Path(NameNodeInfo.getUrl() + HadoopNodeInfo.getPathInHdfs()
-					+ "outputDir_" + shortFileName.replace(".", "_")));
+					+ "dim_departments/outputDir_" + shortFileName.replace(".", "_")));
 			return job.waitForCompletion(true);
 
 		} catch (Exception e) {

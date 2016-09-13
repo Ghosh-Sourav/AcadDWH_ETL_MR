@@ -8,8 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
-
 import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo;
 import in.ac.iitkgp.acaddwh.config.HadoopNodeInfo.MapCount;
 
@@ -36,30 +34,32 @@ public class ConfigController extends HttpServlet {
 
 		HttpSession session = request.getSession(false);
 
-		if (session == null || session.getAttribute("key") == null || !ServletFileUpload.isMultipartContent(request)) {
+		if (session == null || session.getAttribute("key") == null) {
 			response.sendRedirect("/acaddwh/SignOutController");
 
 		} else {
 
 			String key = request.getParameter("key");
+			System.out.println("Key to update = " + key);
 
 			if ("noOfMappers".equals(key)) {
 				String noOfMappers = request.getParameter("noOfMappers");
-				
-				if("1".equals(noOfMappers)) {
+				System.out.println("New Value = " + noOfMappers);
+
+				if ("1".equals(noOfMappers)) {
 					HadoopNodeInfo.setNoOfMappersRequired(MapCount.ONE_MAPPER);
-				} else if("2".equals(noOfMappers)) {
+				} else if ("2".equals(noOfMappers)) {
 					HadoopNodeInfo.setNoOfMappersRequired(MapCount.TWO_MAPPERS);
-				} else if("proportional".equals(noOfMappers)) {
+				} else if ("proportional".equals(noOfMappers)) {
 					HadoopNodeInfo.setNoOfMappersRequired(MapCount.PROPORTIONAL_TO_FILESIZE);
 				}
 			}
-			
+
 			session.setAttribute("msg", "Global configuration updated");
 			session.setAttribute("msgClass", "alert-info");
-			
+
 			response.sendRedirect("jsp/institute/ETL.jsp");
-			
+
 		}
 
 	}

@@ -25,21 +25,10 @@
 <h1>ETL Processes</h1>
 <hr />
 <blockquote>
-	<b>No of mappers required:</b>
-	<%
-		if (HadoopNodeInfo.getNoOfMappersRequired() == HadoopNodeInfo.MapCount.ONE_MAPPER) {
-	%><mark>1</mark>
-	<%
-		} else if (HadoopNodeInfo.getNoOfMappersRequired() == HadoopNodeInfo.MapCount.TWO_MAPPERS) {
-	%><mark>2</mark>
-	<%
-		} else {
-	%><mark>Proportional to input file size</mark>
-	<%
-		}
-	%>
-	<form class="form-horizontal" role="form" action="/acaddwh/ConfigController?key=noOfMappers" method="get">
-		<select name="noOfMappers">
+	<form class="form-horizontal" role="form" action="/acaddwh/ConfigController" method="get">
+		<input type="hidden" name="key" value="noOfMappers" />
+		<b>No of mappers required:</b>
+		<select name="noOfMappers" class="form-control" style="width: 50%; display: inline;">
 			<option value="1" <%=(HadoopNodeInfo.getNoOfMappersRequired() == HadoopNodeInfo.MapCount.ONE_MAPPER)?"selected":"" %>>1</option>
 			<option value="2" <%=(HadoopNodeInfo.getNoOfMappersRequired() == HadoopNodeInfo.MapCount.TWO_MAPPERS)?"selected":"" %>>2</option>
 			<option value="proportional" <%=(HadoopNodeInfo.getNoOfMappersRequired() == HadoopNodeInfo.MapCount.PROPORTIONAL_TO_FILESIZE)?"selected":"" %>>Proportional to input file size</option>

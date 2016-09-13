@@ -6,12 +6,13 @@
 <%@page import="in.ac.iitkgp.acaddwh.service.impl.RequestServiceImpl"%>
 <%@page import="in.ac.iitkgp.acaddwh.service.RequestService"%>
 <%@page import="java.util.LinkedHashMap"%>
-<%@page import="java.util.Map"%>institute_key,df,rows,size (in B),"split size (in B)","mappers (recorded)","mappers (estimated)","time, E&T MR max task (ns)","time, E&T MR total task (ns)","time, E&T thread (ns)","time, L (ms)","time, effective ETL (ms)"<br/>
+<%@page import="java.util.Map"%>slNo,institute_key,df,rows,size (in B),"split size (in B)","mappers (recorded)","mappers (estimated)","time, E&T MR max task (ns)","time, E&T MR total task (ns)","time, E&T thread (ns)","time, L (ms)","time, effective ETL (ms)"<br/>
 <%
 	RequestService requestService = new RequestServiceImpl();
 	List<Request> etlRequests = requestService.getLogs();
+	long slNo = 0;
 
-	for (Request etlRequest : etlRequests) {
+	for (Request etlRequest : etlRequests) {		
 		String institute_key = etlRequest.getFileNameWithoutExtn()
 				.substring(etlRequest.getFileNameWithoutExtn().indexOf("_") + 1).split("_")[0];
 		String df = etlRequest.getFileNameWithoutExtn()
@@ -33,7 +34,8 @@
 				.replace("<br />", "");
 
 		if (etlRequest.getStatus().contains("ETL Process completed successfully<br/>")) {
-%><%=institute_key%>,<%=df%>,<%=timeStats%><br/>
+			++slNo;
+%><%=slNo %>,<%=institute_key %>,<%=df %>,<%=timeStats %><br/>
 <%
 	}
 	}
