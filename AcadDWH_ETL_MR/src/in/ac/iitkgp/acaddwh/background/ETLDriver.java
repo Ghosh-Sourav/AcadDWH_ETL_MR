@@ -185,14 +185,14 @@ public class ETLDriver implements Runnable {
 					+ (timePostExtractAndTransform - timeInitial));
 			requestService.updateLog(request);
 
-			List<String> partFilePaths = new ArrayList<String>();
-			/*
+			//List<String> partFilePaths = new ArrayList<String>();
+			
 			List<String> partFilePaths = HdfsManager.getPartFilePaths(NameNodeInfo.getUrl()
 					+ HadoopNodeInfo.getPathInHdfs() + "outputDir_" + shortFileName.replace(".", "_"));
 			for (String partFilePath : partFilePaths) {
 				etlService.load(partFilePath, absoluteFileNameWithoutExtn + "-report.txt");
 			}
-			*/
+			
 			timePostLoad = ManagementFactory.getThreadMXBean().getThreadCpuTime(Thread.currentThread().getId());
 			System.out.println("[" + shortFileName + "]: Loaded!");
 
