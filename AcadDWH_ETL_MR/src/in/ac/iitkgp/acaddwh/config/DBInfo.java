@@ -3,7 +3,7 @@ package in.ac.iitkgp.acaddwh.config;
 public class DBInfo {
 	private static String driverClass = "org.postgresql.Driver";
 	private static String protocol = "jdbc:postgresql:";
-	private static String hostIP = "10.5.23.218";
+	private static String hostIP = "10.5.23.231"; //"10.5.23.218";
 	private static long hostPort = 5432;
 	private static String databaseName = "dwh";
 	private static String username = "sourav";

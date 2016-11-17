@@ -210,7 +210,7 @@ public class ETLDriver implements Runnable {
 					+ HadoopNodeInfo.getSplitSize(shortFileName) + "<br/> Mappers (Recorded): "
 					+ ((!HadoopNodeInfo.isReducerToBeUsed()) ? partFilePaths.size() : "-1")
 					+ "<br/> Mappers (Estimated): "
-					+ Math.ceil((double) FileStats.getSizeInBytes(shortFileName)
+					+ Math.round((double) FileStats.getSizeInBytes(shortFileName)
 							/ (double) HadoopNodeInfo.getSplitSize(shortFileName))
 					+ "<br/> E&T MR Max Task Time (ns): " + etMaxTaskTime + "<br/> E&T MR Total Task Time (ns): "
 					+ etTaskTotalTime + "<br/> E&T Thread (ns): " + (timePostExtractAndTransform - timeInitial)
